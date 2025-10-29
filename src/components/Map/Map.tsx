@@ -4,7 +4,9 @@ import "leaflet-control-geocoder";
 import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
+import "leaflet-draw-drag";
 import "leaflet-draw/dist/leaflet.draw.css";
+import "leaflet-path-drag";
 import "leaflet-transform";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState } from "react";
@@ -114,19 +116,19 @@ export default function Map() {
 
   return (
     <MapContainer
-      center={[10, 23]}
+      center={[43, 23]}
       zoom={10}
       ref={mapRef}
       scrollWheelZoom={true}
       className={styles.map}
-      maxZoom={21}
+      maxZoom={25}
     >
       <FeatureGroup>
         <EditControl
           position="topright"
           onCreated={onCreate}
           draw={{
-            polygon: { allowIntersection: true },
+            polygon: false,
             polyline: false,
             rectangle: true,
             circle: false,
@@ -139,14 +141,46 @@ export default function Map() {
         attribution="Tiles &copy; Esri"
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         maxNativeZoom={19}
-        maxZoom={21}
+        maxZoom={25}
       />
 
       {addReferenceMode && lowReferenceLocation && windowWidth >= 1000 && (
         <Marker position={lowReferenceLocation} icon={healthIcon}></Marker>
       )}
       {polygon.length !== 0 && (
-        <Polygon positions={rotatePolygon(polygon, rotation)} />
+        <Polygon
+          positions={rotatePolygon(polygon, rotation)}
+          ref={polygonRef}
+          pathOptions={{ color: "blue" }}
+          draggable={true}
+          eventHandlers={{
+            drag: (e) => {
+              /*
+              const layer = e.target as L.Polygon;
+              const newCoords = layer
+                .getLatLngs()[0]
+                .map(
+                  (latlng: L.LatLng) => [latlng.lat, latlng.lng] as LatLngTuple
+                );
+              setPolygon(newCoords); // update state with new coordinates
+              */
+              console.log(e);
+            },
+            dragend: (e) => {
+              const layer = e.target as L.Polygon;
+
+              // Leaflet Polygons store LatLngs as nested arrays (for multipolygons)
+              const newCoords: LatLngTuple[] = (
+                layer.getLatLngs()[0] as L.LatLng[]
+              ).map((latlng) => [latlng.lat, latlng.lng] as LatLngTuple);
+
+              // Update state
+              setPolygon(newCoords);
+
+              console.log("Drag ended, new polygon coords:", newCoords);
+            },
+          }}
+        />
       )}
       {polygon.length !== 0 && (
         <div

@@ -1,17 +1,11 @@
 "use client";
 
-import useAdditionalPanels from "@/hooks/useAdditionalPanels";
-import { getSideMarkers } from "@/utils/initialPanelUtils";
-import { Icon, LatLngTuple } from "leaflet";
+import { LatLngTuple } from "leaflet";
 import { RefObject, useEffect, useState } from "react";
-import { Marker, Polygon, useMap } from "react-leaflet";
+import { Polygon, useMap } from "react-leaflet";
 import DraggablePanel from "../DraggablePanel/DraggablePanel";
 import LatLongFinder from "../LatLongFinder/LatLongFinder";
-
-const healthIcon = new Icon({
-  iconUrl: "/images/plus.png",
-  iconSize: [25, 25],
-});
+import SideMarkers from "../SideMarkers/SideMarkers";
 
 interface PanelGroupProps {
   mapRef: RefObject<L.Map | null>;
@@ -20,7 +14,7 @@ interface PanelGroupProps {
 const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const map = useMap();
   const [additionalPanel, setAdditionalPanel] = useState<LatLngTuple[]>([]);
-  const { addPolygon } = useAdditionalPanels();
+
   const [dragging, setDragging] = useState(false);
   const [showPluses, setShowPluses] = useState(false);
   const [movingPolygon, setMovingPolygon] = useState<LatLngTuple[]>([]);
@@ -65,17 +59,9 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
       {movingPolygon && (
         <Polygon positions={movingPolygon} pathOptions={{ color: "red" }} />
       )}
-      {initialPolygon.length > 0 &&
-        showPluses &&
-        !dragging &&
-        getSideMarkers(initialPolygon).map((pos, idx) => (
-          <Marker
-            key={idx}
-            position={pos}
-            icon={healthIcon}
-            eventHandlers={{ click: () => addPolygon(idx) }}
-          />
-        ))}
+      {initialPolygon.length > 0 && showPluses && !dragging && (
+        <SideMarkers initialPolygon={initialPolygon} />
+      )}
 
       <div style={{ marginTop: "50px", position: "absolute", zIndex: 10000 }}>
         <button

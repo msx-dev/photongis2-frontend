@@ -24,9 +24,6 @@ const DraggablePanel = ({
         dragstart: () => {
           setDragging(true);
         },
-        drag: (e) => {
-          // optional: update polygon live
-        },
         dragend: (e) => {
           const layer = e.target as L.Polygon;
           const newCoords: LatLngTuple[] = (

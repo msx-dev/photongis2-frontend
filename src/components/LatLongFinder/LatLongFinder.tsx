@@ -19,9 +19,7 @@ const LatLongFinder = ({
 }: LatLongFinderProps) => {
   const map = useMapEvents({
     mousemove(e) {
-      // Update moving polygon if in "add polygon" mode
       if (addReferenceMode) {
-        // Example: small square around mouse
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         const size = 0.00001;

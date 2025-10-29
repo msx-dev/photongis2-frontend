@@ -2,7 +2,7 @@
 import dynamic from "next/dynamic";
 import styles from "./page.module.scss";
 
-const Map = dynamic(() => import("@/components/Map/Map"), { ssr: false });
+const Map = dynamic(() => import("@/components/Map2/Map2"), { ssr: false });
 
 export default function App() {
   return (

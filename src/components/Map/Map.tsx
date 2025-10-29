@@ -13,10 +13,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   FeatureGroup,
   MapContainer,
+  MapContainer,
   Marker,
   Polygon,
   TileLayer,
-  useMapEvents,
 } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import styles from "./Map.module.scss";
@@ -64,36 +64,6 @@ export default function Map() {
     setOriginalPolygon(polygonCoords); // Store original polygon coords
     setPolygon(polygonCoords); // Update displayed polygon
     e.layer.remove();
-  };
-
-  const LatLongFinder = () => {
-    const map = useMapEvents({
-      mousemove(e) {
-        // Update moving polygon if in "add polygon" mode
-        if (addReferenceMode) {
-          // Example: small square around mouse
-          const lat = e.latlng.lat;
-          const lng = e.latlng.lng;
-          const size = 0.001; // ~100m square
-          setMovingPolygon([
-            [lat - size, lng - size],
-            [lat - size, lng + size],
-            [lat + size, lng + size],
-            [lat + size, lng - size],
-          ]);
-        }
-      },
-      click(e) {
-        if (addReferenceMode && movingPolygon) {
-          // Place polygon permanently
-          setPolygon(movingPolygon);
-          setOriginalPolygon(movingPolygon); // if you want rotation
-          setMovingPolygon(null);
-          setAddReferenceMode(false); // exit add mode
-        }
-      },
-    });
-    return null;
   };
 
   // Rotate a polygon around its center

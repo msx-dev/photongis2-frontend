@@ -1,12 +1,13 @@
 "use client";
-import L, { Icon, LatLngExpression } from "leaflet";
+import L, { Icon, LatLngTuple } from "leaflet";
 import "leaflet-control-geocoder";
 import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import "leaflet-defaulticon-compatibility";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-draw/dist/leaflet.draw.css";
+import "leaflet-transform";
 import "leaflet/dist/leaflet.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FeatureGroup,
   MapContainer,
@@ -21,42 +22,39 @@ import styles from "./Map.module.scss";
 const healthIcon = new Icon({
   iconUrl:
     "https://img.icons8.com/?size=100&id=7yVMtODDHoSU&format=png&color=000000",
-  iconSize: [35, 35], // size of the icon
+  iconSize: [35, 35],
 });
 
 export default function Map() {
-  const [polygon, setPolygon] = useState<L.LatLngTuple[]>([]);
+  const [polygon, setPolygon] = useState<LatLngTuple[]>([]);
+  const [rotation, setRotation] = useState(0); // rotation in degrees
   const [addReferenceMode, setAddReferenceMode] = useState(false);
   const [lowReferenceLocation, setLowReferenceLocation] =
-    useState<LatLngExpression>();
+    useState<L.LatLngExpression>();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const polygonRef = useRef<L.Polygon>(null);
+  const mapRef = useRef<L.Map | null>(null);
 
   const onCreate = (e: any) => {
-    const { layer } = e;
-    if (e.layerType === "polygon") {
-      const latlngs = e.layer.editing.latlngs;
-      if (!latlngs || latlngs.length === 0) {
-        console.error("Invalid latlngs data:", latlngs);
-        return;
-      }
+    if (e.layerType !== "rectangle") return;
 
-      // Ensure latlngs[0] exists and is an array
-      if (Array.isArray(latlngs[0])) {
-        const nestedLatLngs = latlngs[0][0]; // Access the inner array of latlngs
-        if (nestedLatLngs) {
-          const polygonCoords: L.LatLngTuple[] = nestedLatLngs.map(
-            (latlng: { lat: number; lng: number }) =>
-              [latlng.lat, latlng.lng] as L.LatLngTuple
-          );
-          setPolygon(polygonCoords);
-        } else {
-          console.error("Unexpected latlngs structure:", latlngs);
-        }
-      } else {
-        console.error("Unexpected latlngs structure:", latlngs);
-      }
-      layer.remove();
+    const latlngs = e.layer.getLatLngs();
+    if (
+      !Array.isArray(latlngs) ||
+      latlngs.length === 0 ||
+      !Array.isArray(latlngs[0])
+    ) {
+      console.error("Unexpected latlngs structure:", latlngs);
+      return;
     }
+
+    const polygonCoords: LatLngTuple[] = latlngs[0].map((latlng: L.LatLng) => [
+      latlng.lat,
+      latlng.lng,
+    ]);
+
+    setPolygon(polygonCoords);
+    e.layer.remove();
   };
 
   const LatLongFinder = () => {
@@ -75,6 +73,21 @@ export default function Map() {
     return null;
   };
 
+  // Rotate a polygon around its center
+  const rotatePolygon = (coords: LatLngTuple[], angleDeg: number) => {
+    const angleRad = (angleDeg * Math.PI) / 180;
+    const centerLat = coords.reduce((sum, c) => sum + c[0], 0) / coords.length;
+    const centerLng = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
+
+    return coords.map(([lat, lng]) => {
+      const x = lng - centerLng;
+      const y = lat - centerLat;
+      const rotatedX = x * Math.cos(angleRad) - y * Math.sin(angleRad);
+      const rotatedY = x * Math.sin(angleRad) + y * Math.cos(angleRad);
+      return [centerLat + rotatedY, centerLng + rotatedX] as LatLngTuple;
+    });
+  };
+
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -88,6 +101,7 @@ export default function Map() {
     <MapContainer
       center={[10, 23]}
       zoom={10}
+      ref={mapRef}
       scrollWheelZoom={true}
       className={styles.map}
       maxZoom={21}
@@ -107,7 +121,7 @@ export default function Map() {
         />
       </FeatureGroup>
       <TileLayer
-        attribution="Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
+        attribution="Tiles &copy; Esri"
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         maxNativeZoom={19}
         maxZoom={19}
@@ -116,7 +130,36 @@ export default function Map() {
       {addReferenceMode && lowReferenceLocation && windowWidth >= 1000 && (
         <Marker position={lowReferenceLocation} icon={healthIcon}></Marker>
       )}
-      {polygon.length !== 0 && <Polygon positions={polygon} />}
+      {polygon.length !== 0 && (
+        <Polygon positions={rotatePolygon(polygon, rotation)} />
+      )}
+      {polygon.length !== 0 && (
+        <div
+          style={{ marginTop: "10px", position: "absolute", zIndex: 10000 }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            mapRef.current?.dragging.disable(); // disable map drag
+          }}
+          onMouseUp={(e) => {
+            e.stopPropagation();
+            mapRef.current?.dragging.enable(); // re-enable map drag
+          }}
+          onMouseLeave={(e) => {
+            mapRef.current?.dragging.enable(); // safety
+          }}
+        >
+          <label>
+            Rotate Rectangle: {rotation}°
+            <input
+              type="range"
+              min={0}
+              max={360}
+              value={rotation}
+              onChange={(e) => setRotation(Number(e.target.value))}
+            />
+          </label>
+        </div>
+      )}
       <LatLongFinder />
     </MapContainer>
   );

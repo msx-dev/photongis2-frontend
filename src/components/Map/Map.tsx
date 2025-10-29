@@ -34,6 +34,8 @@ export default function Map() {
   const [lowReferenceLocation, setLowReferenceLocation] =
     useState<L.LatLngExpression>();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [originalPolygon, setOriginalPolygon] = useState<LatLngTuple[]>([]); // Store original polygon coords
+
   const polygonRef = useRef<L.Polygon>(null);
   const mapRef = useRef<L.Map | null>(null);
 
@@ -55,7 +57,8 @@ export default function Map() {
       latlng.lng,
     ]);
 
-    setPolygon(polygonCoords);
+    setOriginalPolygon(polygonCoords); // Store original polygon coords
+    setPolygon(polygonCoords); // Update displayed polygon
     e.layer.remove();
   };
 
@@ -114,6 +117,13 @@ export default function Map() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    console.log(rotation);
+    if (originalPolygon.length > 0) {
+      setPolygon(rotatePolygon(originalPolygon, rotation)); // Rotate based on original coordinates
+    }
+  }, [rotation, originalPolygon]); // Depend on originalPolygon
+
   return (
     <MapContainer
       center={[43, 23]}
@@ -149,7 +159,7 @@ export default function Map() {
       )}
       {polygon.length !== 0 && (
         <Polygon
-          positions={rotatePolygon(polygon, rotation)}
+          positions={polygon}
           ref={polygonRef}
           pathOptions={{ color: "blue" }}
           draggable={true}

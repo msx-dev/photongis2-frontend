@@ -1,7 +1,6 @@
 "use client";
 
-import useAdditionalPolygons from "@/hooks/useAdditionalPolygons";
-import { getAdditionalPanel } from "@/utils/additionalPanelUtils";
+import useAdditionalPanels from "@/hooks/useAdditionalPanels";
 import { getSideMarkers } from "@/utils/initialPanelUtils";
 import { Icon, LatLngTuple } from "leaflet";
 import { RefObject, useEffect, useState } from "react";
@@ -21,8 +20,7 @@ interface PanelGroupProps {
 const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const map = useMap();
   const [additionalPanel, setAdditionalPanel] = useState<LatLngTuple[]>([]);
-  const { additionalPolygons, setAdditionalPolygons, addPolygon } =
-    useAdditionalPolygons();
+  const { addPolygon, getAdditionalPanelsCoords } = useAdditionalPanels();
   const [dragging, setDragging] = useState(false);
   const [showPluses, setShowPluses] = useState(false);
   const [movingPolygon, setMovingPolygon] = useState<LatLngTuple[]>([]);
@@ -51,13 +49,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
     };
   }, [map]); // On
 
-  useEffect(() => {
-    if (initialPolygon.length) {
-      const newPanel = getAdditionalPanel(initialPolygon, 0, 0.000001, "left");
-      console.log("Additional Panel: ", newPanel);
-      setAdditionalPanel(newPanel);
-    }
-  }, [initialPolygon]);
+  const panelCoords = getAdditionalPanelsCoords(initialPolygon, 0.000002);
 
   return (
     <>
@@ -86,6 +78,13 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
             eventHandlers={{ click: () => addPolygon(idx) }}
           />
         ))}
+      {panelCoords.map((coords, index) => (
+        <Polygon
+          positions={coords}
+          pathOptions={{ color: "red" }}
+          key={index}
+        />
+      ))}
       <div style={{ marginTop: "50px", position: "absolute", zIndex: 10000 }}>
         <button
           onClick={() => {

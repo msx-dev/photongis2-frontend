@@ -104,7 +104,7 @@ export default function Map() {
       ref={mapRef}
       scrollWheelZoom={true}
       className={styles.map}
-      maxZoom={21}
+      maxZoom={19}
     >
       <FeatureGroup>
         <EditControl
@@ -124,7 +124,7 @@ export default function Map() {
         attribution="Tiles &copy; Esri"
         url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
         maxNativeZoom={19}
-        maxZoom={19}
+        maxZoom={21}
       />
 
       {addReferenceMode && lowReferenceLocation && windowWidth >= 1000 && (
@@ -144,7 +144,7 @@ export default function Map() {
             e.stopPropagation();
             mapRef.current?.dragging.enable(); // re-enable map drag
           }}
-          onMouseLeave={(e) => {
+          onMouseLeave={() => {
             mapRef.current?.dragging.enable(); // safety
           }}
         >

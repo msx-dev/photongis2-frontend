@@ -28,6 +28,10 @@ const healthIcon = new Icon({
 });
 
 export default function Map() {
+  const [movingPolygon, setMovingPolygon] = useState<LatLngTuple[] | null>(
+    null
+  );
+  const [initialPolygon, setInitialPolygon] = useState<LatLngTuple[]>([]);
   const [polygon, setPolygon] = useState<LatLngTuple[]>([]);
   const [rotation, setRotation] = useState(0); // rotation in degrees
   const [addReferenceMode, setAddReferenceMode] = useState(false);
@@ -65,13 +69,27 @@ export default function Map() {
   const LatLongFinder = () => {
     const map = useMapEvents({
       mousemove(e) {
+        // Update moving polygon if in "add polygon" mode
         if (addReferenceMode) {
-          setLowReferenceLocation(e.latlng);
+          // Example: small square around mouse
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          const size = 0.001; // ~100m square
+          setMovingPolygon([
+            [lat - size, lng - size],
+            [lat - size, lng + size],
+            [lat + size, lng + size],
+            [lat + size, lng - size],
+          ]);
         }
       },
       click(e) {
-        if (addReferenceMode) {
-          setAddReferenceMode(false);
+        if (addReferenceMode && movingPolygon) {
+          // Place polygon permanently
+          setPolygon(movingPolygon);
+          setOriginalPolygon(movingPolygon); // if you want rotation
+          setMovingPolygon(null);
+          setAddReferenceMode(false); // exit add mode
         }
       },
     });
@@ -162,6 +180,7 @@ export default function Map() {
           positions={polygon}
           ref={polygonRef}
           pathOptions={{ color: "blue" }}
+          //@ts-expect-error While this results in an error, draggable exists
           draggable={true}
           eventHandlers={{
             drag: (e) => {
@@ -219,6 +238,21 @@ export default function Map() {
           </label>
         </div>
       )}
+      {movingPolygon && (
+        <Polygon positions={movingPolygon} pathOptions={{ color: "red" }} />
+      )}
+      <div style={{ marginTop: "30px", position: "absolute", zIndex: 10000 }}>
+        <button onClick={() => {}}>Add panel</button>
+      </div>
+      <div style={{ marginTop: "50px", position: "absolute", zIndex: 10000 }}>
+        <button
+          onClick={() => {
+            setAddReferenceMode(true);
+          }}
+        >
+          Add Polygon
+        </button>
+      </div>
       <LatLongFinder />
     </MapContainer>
   );

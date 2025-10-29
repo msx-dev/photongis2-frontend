@@ -119,7 +119,7 @@ export default function Map() {
       ref={mapRef}
       scrollWheelZoom={true}
       className={styles.map}
-      maxZoom={19}
+      maxZoom={21}
     >
       <FeatureGroup>
         <EditControl

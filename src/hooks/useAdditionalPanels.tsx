@@ -1,5 +1,3 @@
-import { getAdditionalPanel } from "@/utils/additionalPanelUtils";
-import { LatLngTuple } from "leaflet";
 import { useState } from "react";
 
 export interface AdditionalPanelsType {
@@ -29,40 +27,10 @@ const useAdditionalPanels = () => {
     }
   };
 
-  const getAdditionalPanelsCoords = (
-    initialPanel: LatLngTuple[],
-    spacing: number
-  ) => {
-    const allPanelsCoords: LatLngTuple[][] = [];
-
-    // Calculate panels for each side
-    for (let i = 1; i <= additionalPolygons.top; i++) {
-      allPanelsCoords.push(getAdditionalPanel(initialPanel, i, spacing, "top"));
-    }
-    for (let i = 1; i <= additionalPolygons.right; i++) {
-      allPanelsCoords.push(
-        getAdditionalPanel(initialPanel, i, spacing, "right")
-      );
-    }
-    for (let i = 1; i <= additionalPolygons.bottom; i++) {
-      allPanelsCoords.push(
-        getAdditionalPanel(initialPanel, i, spacing, "bottom")
-      );
-    }
-    for (let i = 1; i <= additionalPolygons.left; i++) {
-      allPanelsCoords.push(
-        getAdditionalPanel(initialPanel, i, spacing, "left")
-      );
-    }
-
-    return allPanelsCoords;
-  };
-
   return {
     additionalPolygons,
     setAdditionalPolygons,
     addPolygon,
-    getAdditionalPanelsCoords,
   };
 };
 

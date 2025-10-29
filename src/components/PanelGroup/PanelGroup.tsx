@@ -20,7 +20,7 @@ interface PanelGroupProps {
 const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const map = useMap();
   const [additionalPanel, setAdditionalPanel] = useState<LatLngTuple[]>([]);
-  const { addPolygon, getAdditionalPanelsCoords } = useAdditionalPanels();
+  const { addPolygon } = useAdditionalPanels();
   const [dragging, setDragging] = useState(false);
   const [showPluses, setShowPluses] = useState(false);
   const [movingPolygon, setMovingPolygon] = useState<LatLngTuple[]>([]);
@@ -49,8 +49,6 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
     };
   }, [map]); // On
 
-  const panelCoords = getAdditionalPanelsCoords(initialPolygon, 0.000002);
-
   return (
     <>
       {initialPolygon.length !== 0 && (
@@ -78,13 +76,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
             eventHandlers={{ click: () => addPolygon(idx) }}
           />
         ))}
-      {panelCoords.map((coords, index) => (
-        <Polygon
-          positions={coords}
-          pathOptions={{ color: "red" }}
-          key={index}
-        />
-      ))}
+
       <div style={{ marginTop: "50px", position: "absolute", zIndex: 10000 }}>
         <button
           onClick={() => {

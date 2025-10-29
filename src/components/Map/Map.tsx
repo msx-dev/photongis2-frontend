@@ -75,16 +75,31 @@ export default function Map() {
 
   // Rotate a polygon around its center
   const rotatePolygon = (coords: LatLngTuple[], angleDeg: number) => {
+    if (!mapRef.current) return coords;
+
     const angleRad = (angleDeg * Math.PI) / 180;
+
+    // Compute center in LatLng
     const centerLat = coords.reduce((sum, c) => sum + c[0], 0) / coords.length;
     const centerLng = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
+    const center = L.latLng(centerLat, centerLng);
 
     return coords.map(([lat, lng]) => {
-      const x = lng - centerLng;
-      const y = lat - centerLat;
+      const point = mapRef.current!.latLngToLayerPoint([lat, lng]);
+      const centerPoint = mapRef.current!.latLngToLayerPoint(center);
+
+      const x = point.x - centerPoint.x;
+      const y = point.y - centerPoint.y;
+
       const rotatedX = x * Math.cos(angleRad) - y * Math.sin(angleRad);
       const rotatedY = x * Math.sin(angleRad) + y * Math.cos(angleRad);
-      return [centerLat + rotatedY, centerLng + rotatedX] as LatLngTuple;
+
+      const rotatedPoint = L.point(
+        rotatedX + centerPoint.x,
+        rotatedY + centerPoint.y
+      );
+      const rotatedLatLng = mapRef.current!.layerPointToLatLng(rotatedPoint);
+      return [rotatedLatLng.lat, rotatedLatLng.lng] as LatLngTuple;
     });
   };
 

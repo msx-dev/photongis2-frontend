@@ -99,8 +99,18 @@ const DraggablePanel = ({
           ).map((latlng) => [latlng.lat, latlng.lng] as LatLngTuple);
           if (rangeValue === 0) {
             onInitialPanelChange(lastCoordsRef.current, newCoords);
-          } else {
-            const oldInitial = lastCoordsRef.current;
+          }
+          lastCoordsRef.current = newCoords;
+        },
+        dragend: (e) => {
+          const layer = e.target as L.Polygon;
+          const newCoords: LatLngTuple[] = (
+            layer.getLatLngs()[0] as L.LatLng[]
+          ).map((latlng) => [latlng.lat, latlng.lng] as LatLngTuple);
+          originalPolygonRef.current = newCoords;
+
+          if (rangeValue) {
+            const oldInitial = initialPolygon;
             const newInitial = newCoords;
             const deltas: LatLngTuple[] = oldInitial.map((oldPoint, i) => [
               newInitial[i][0] - oldPoint[0],
@@ -111,6 +121,7 @@ const DraggablePanel = ({
               const updated = new Map(prev);
 
               updated.forEach((panel, key) => {
+                console.log(panel.coords);
                 const newCoords = panel.coords.map((point, i) => [
                   point[0] + deltas[i % deltas.length][0],
                   point[1] + deltas[i % deltas.length][1],
@@ -122,14 +133,6 @@ const DraggablePanel = ({
               return updated;
             });
           }
-          lastCoordsRef.current = newCoords;
-        },
-        dragend: (e) => {
-          const layer = e.target as L.Polygon;
-          const newCoords: LatLngTuple[] = (
-            layer.getLatLngs()[0] as L.LatLng[]
-          ).map((latlng) => [latlng.lat, latlng.lng] as LatLngTuple);
-          originalPolygonRef.current = newCoords;
           setInitialPolygon(newCoords);
           setDragging(false);
 

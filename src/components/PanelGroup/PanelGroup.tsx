@@ -83,7 +83,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
 
     // Update the state with the transformed panels
     setTransformedAdditionalPanels(updatedPanels);
-  }, [rangeValue, additionalPanels, initialPolygon, map]);
+  }, [rangeValue, additionalPanels, map]);
 
   return (
     <>

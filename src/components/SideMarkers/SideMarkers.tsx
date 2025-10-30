@@ -26,15 +26,16 @@ const SideMarkers = ({
   additionalPanels,
 }: SideMarkersProps) => {
   const directionKeys = ["Top", "Right", "Bottom", "Left"] as const;
+
   return (
     <>
-      {getSideMarkers(initialPolygon, additionalPanels).map((pos, idx) => (
+      {getSideMarkers(initialPolygon, additionalPanels).map((marker, index) => (
         <Marker
-          key={idx}
-          position={pos}
+          key={index}
+          position={marker.coords}
           icon={healthIcon}
           eventHandlers={{
-            click: () => addPolygon(0, 0, directionKeys[idx], initialPolygon),
+            click: () => addPolygon(0, 0, marker.position, initialPolygon),
           }}
         />
       ))}

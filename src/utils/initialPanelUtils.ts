@@ -1,3 +1,4 @@
+import { Directions } from "@/constants/panelConstants";
 import { AdditionalPanelsType } from "@/hooks/useAdditionalPanels";
 import { LatLngTuple } from "leaflet";
 
@@ -8,18 +9,83 @@ export const getPolygonCenter = (coords: LatLngTuple[]) => {
   return [latSum / n, lngSum / n] as LatLngTuple;
 };
 
+export const combineAdditionalPanels = (
+  polygonCoords: LatLngTuple[],
+  additionalPanels: Map<string, AdditionalPanelsType>
+) => {
+  const newPanelKey = "0,0";
+  const newPanelCoords = polygonCoords;
+
+  const newPanel = {
+    x: 0,
+    y: 0,
+    coords: newPanelCoords,
+  };
+
+  const combinedPanels = new Map(additionalPanels);
+  combinedPanels.set(newPanelKey, newPanel);
+
+  return combinedPanels;
+};
+
 export const getSideMarkers = (
   polygonCoords: LatLngTuple[],
   additionalPanels: Map<string, AdditionalPanelsType>,
   offset = 0.00002
 ) => {
-  if (!polygonCoords || polygonCoords.length === 0) return [];
-  const center = getPolygonCenter(polygonCoords);
+  const combinedPanels = combineAdditionalPanels(
+    polygonCoords,
+    additionalPanels
+  );
+  console.log(combinedPanels);
 
-  return [
-    [center[0] + offset, center[1]], // top
-    [center[0], center[1] + offset], // right
-    [center[0] - offset, center[1]], // bottom
-    [center[0], center[1] - offset], // left
-  ] as LatLngTuple[];
+  if (!polygonCoords || polygonCoords.length === 0) return [];
+
+  const result: { position: keyof typeof Directions; coords: LatLngTuple }[] =
+    [];
+
+  // Iterate through each panel in the combined panels
+  combinedPanels.forEach((panel, key) => {
+    const [x, y] = key.split(",").map(Number);
+
+    // Determine the center for the current panel
+    const center = getPolygonCenter(panel.coords);
+
+    // Define the potential neighbors and their coordinates
+    const potentialNeighbors: {
+      position: keyof typeof Directions;
+      coords: LatLngTuple;
+    }[] = [
+      { position: "Top", coords: [center[0] + offset, center[1]] },
+      { position: "Right", coords: [center[0], center[1] + offset] },
+      { position: "Bottom", coords: [center[0] - offset, center[1]] },
+      { position: "Left", coords: [center[0], center[1] - offset] },
+    ];
+
+    // Check for neighbors and add missing ones to result
+    potentialNeighbors.forEach(({ position, coords }) => {
+      // Calculate neighbor coordinates based on direction
+      let neighborKey: string;
+
+      if (position === "Right") {
+        neighborKey = `${x},${y + 1}`; // Right neighbor increases x by 1
+      } else if (position === "Left") {
+        neighborKey = `${x},${y - 1}`; // Left neighbor decreases x by 1
+      } else if (position === "Top") {
+        neighborKey = `${x + 1},${y}`; // Top neighbor increases y by 1
+      } else if (position === "Bottom") {
+        neighborKey = `${x - 1},${y}`; // Bottom neighbor decreases y by 1
+      } else {
+        neighborKey = `${x},${y}`; // Default case (this should not be reached)
+      }
+
+      // If there is no neighbor, add the missing side to the result array
+      if (!combinedPanels.has(neighborKey)) {
+        result.push({ position, coords });
+      }
+    });
+  });
+
+  console.log(result);
+  return result;
 };

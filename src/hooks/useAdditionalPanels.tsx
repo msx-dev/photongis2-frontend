@@ -38,7 +38,7 @@ const useAdditionalPanels = () => {
         break;
     }
 
-    const coords = getAdditionalPanel(startingPanel, 0.0001, direction);
+    const coords = getAdditionalPanel(startingPanel, 0.00001, direction);
     const key = `${newX},${newY}`;
 
     setAdditionalPanels((prev) => {

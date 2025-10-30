@@ -1,7 +1,8 @@
 import { Directions } from "@/constants/panelConstants";
 import { getAdditionalPanel } from "@/utils/additionalPanelUtils";
-import { LatLngTuple } from "leaflet";
+import L, { LatLngTuple } from "leaflet";
 import { useState } from "react";
+import { useMap } from "react-leaflet";
 
 export interface AdditionalPanelsType {
   x: number;
@@ -13,6 +14,7 @@ const useAdditionalPanels = () => {
   const [additionalPanels, setAdditionalPanels] = useState<
     Map<string, AdditionalPanelsType>
   >(new Map());
+  const map = useMap();
 
   const addPanel = (
     x: number,
@@ -84,7 +86,31 @@ const useAdditionalPanels = () => {
     });
   };
 
+  const rotateAndTranslatePanel = (
+    coords: LatLngTuple[],
+    center: { x: number; y: number },
+    angleDeg: number
+  ): LatLngTuple[] => {
+    if (!map || coords.length === 0) return [];
+
+    const points = coords.map(([lat, lng]) => map.project([lat, lng]));
+    const angleRad = (angleDeg * Math.PI) / 180;
+
+    const rotatedPoints = points.map((p) => {
+      const dx = p.x - center.x;
+      const dy = p.y - center.y;
+      const rx = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+      const ry = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+      return L.point(center.x + rx, center.y + ry);
+    });
+    return rotatedPoints.map((p) => {
+      const latlng = map.unproject(p);
+      return [latlng.lat, latlng.lng] as LatLngTuple;
+    });
+  };
+
   return {
+    rotateAndTranslatePanel,
     additionalPanels,
     setAdditionalPanels,
     addPanel,

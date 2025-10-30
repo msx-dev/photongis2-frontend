@@ -1,5 +1,6 @@
+import { AdditionalPanelsType } from "@/hooks/useAdditionalPanels";
 import L, { LatLngTuple } from "leaflet";
-import { RefObject, useEffect, useRef } from "react";
+import { RefObject, SetStateAction, useEffect, useRef } from "react";
 import { Polygon, useMap } from "react-leaflet";
 
 interface DraggablePanelProps {
@@ -13,6 +14,9 @@ interface DraggablePanelProps {
   ) => void;
   onClick?: () => void;
   rangeValue: number;
+  setTransformedAdditionalPanels: React.Dispatch<
+    SetStateAction<Map<string, AdditionalPanelsType>>
+  >;
 }
 const DraggablePanel = ({
   mapRef,
@@ -22,6 +26,7 @@ const DraggablePanel = ({
   onInitialPanelChange,
   onClick,
   rangeValue,
+  setTransformedAdditionalPanels,
 }: DraggablePanelProps) => {
   const map = useMap();
   const lastCoordsRef = useRef<LatLngTuple[]>(initialPolygon);
@@ -92,8 +97,31 @@ const DraggablePanel = ({
           const newCoords: LatLngTuple[] = (
             layer.getLatLngs()[0] as L.LatLng[]
           ).map((latlng) => [latlng.lat, latlng.lng] as LatLngTuple);
+          if (rangeValue === 0) {
+            onInitialPanelChange(lastCoordsRef.current, newCoords);
+          } else {
+            const oldInitial = lastCoordsRef.current;
+            const newInitial = newCoords;
+            const deltas: LatLngTuple[] = oldInitial.map((oldPoint, i) => [
+              newInitial[i][0] - oldPoint[0],
+              newInitial[i][1] - oldPoint[1],
+            ]);
 
-          onInitialPanelChange(lastCoordsRef.current, newCoords);
+            setTransformedAdditionalPanels((prev) => {
+              const updated = new Map(prev);
+
+              updated.forEach((panel, key) => {
+                const newCoords = panel.coords.map((point, i) => [
+                  point[0] + deltas[i % deltas.length][0],
+                  point[1] + deltas[i % deltas.length][1],
+                ]) as LatLngTuple[];
+
+                updated.set(key, { ...panel, coords: newCoords });
+              });
+
+              return updated;
+            });
+          }
           lastCoordsRef.current = newCoords;
         },
         dragend: (e) => {

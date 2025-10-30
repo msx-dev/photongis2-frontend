@@ -1,6 +1,8 @@
 "use client";
 
-import useAdditionalPanels from "@/hooks/useAdditionalPanels";
+import useAdditionalPanels, {
+  AdditionalPanelsType,
+} from "@/hooks/useAdditionalPanels";
 import L, { LatLngTuple } from "leaflet";
 import { RefObject, useEffect, useState } from "react";
 import { Polygon, useMap } from "react-leaflet";
@@ -14,14 +16,22 @@ interface PanelGroupProps {
 
 const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const map = useMap();
-  const { additionalPanels, addPanel, onInitialPanelChange, removePanel } =
-    useAdditionalPanels();
+  const {
+    additionalPanels,
+    addPanel,
+    onInitialPanelChange,
+    removePanel,
+    rotateAndTranslatePanel,
+    setAdditionalPanels,
+  } = useAdditionalPanels();
   const [dragging, setDragging] = useState(false);
   const [showPluses, setShowPluses] = useState(false);
   const [movingPolygon, setMovingPolygon] = useState<LatLngTuple[]>([]);
   const [initialPolygon, setInitialPolygon] = useState<LatLngTuple[]>([]);
   const [addReferenceMode, setAddReferenceMode] = useState(false);
   const [rangeValue, setRangeValue] = useState(0);
+  const [transformedAdditionalPanels, setTransformedAdditionalPanels] =
+    useState<Map<string, AdditionalPanelsType>>(new Map());
 
   // (removed) originalInitialPolygon state was unused
 
@@ -45,34 +55,41 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
     };
   }, [map]); // On
 
-  // Utility: Rotate around a center, matching DraggablePanel logic
-  const rotateAndTranslatePanel = (
-    coords: LatLngTuple[],
-    center: { x: number; y: number },
-    angleDeg: number
-  ): LatLngTuple[] => {
-    if (!map || coords.length === 0) return [];
+  useEffect(() => {
+    // Transform additional panels when rangeValue (rotation) changes
+    const updatedPanels = new Map(additionalPanels);
 
-    const points = coords.map(([lat, lng]) => map.project([lat, lng]));
-    const angleRad = (angleDeg * Math.PI) / 180;
+    updatedPanels.forEach((panel, key) => {
+      // Find the center of the initialPolygon in pixel space
+      const initialPoints = initialPolygon.map(([lat, lng]) =>
+        map.project([lat, lng])
+      );
+      const cx =
+        initialPoints.reduce((sum, p) => sum + p.x, 0) / initialPoints.length;
+      const cy =
+        initialPoints.reduce((sum, p) => sum + p.y, 0) / initialPoints.length;
+      const center = { x: cx, y: cy };
 
-    const rotatedPoints = points.map((p) => {
-      const dx = p.x - center.x;
-      const dy = p.y - center.y;
-      const rx = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
-      const ry = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
-      return L.point(center.x + rx, center.y + ry);
+      // Rotate+translate this panel around the center
+      const transformedCoords = rotateAndTranslatePanel(
+        panel.coords,
+        center,
+        rangeValue
+      );
+
+      // Update the panel with the new transformed coordinates
+      updatedPanels.set(key, { ...panel, coords: transformedCoords });
     });
-    return rotatedPoints.map((p) => {
-      const latlng = map.unproject(p);
-      return [latlng.lat, latlng.lng] as LatLngTuple;
-    });
-  };
+
+    // Update the state with the transformed panels
+    setTransformedAdditionalPanels(updatedPanels);
+  }, [rangeValue, additionalPanels, initialPolygon, map]);
 
   return (
     <>
       {initialPolygon.length !== 0 && (
         <DraggablePanel
+          setTransformedAdditionalPanels={setTransformedAdditionalPanels}
           rangeValue={rangeValue}
           mapRef={mapRef}
           initialPolygon={initialPolygon}
@@ -82,34 +99,16 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
         />
       )}
 
-      {Array.from(additionalPanels.values()).map((panel) => {
-        // Find the center of the initialPolygon in pixel space
-        const initialPoints = initialPolygon.map(([lat, lng]) =>
-          map.project([lat, lng])
-        );
-        const cx =
-          initialPoints.reduce((sum, p) => sum + p.x, 0) / initialPoints.length;
-        const cy =
-          initialPoints.reduce((sum, p) => sum + p.y, 0) / initialPoints.length;
-        const center = { x: cx, y: cy };
-
-        // Rotate+translate this additional panel around the same center
-        const transformedCoords = rotateAndTranslatePanel(
-          panel.coords,
-          center,
-          rangeValue
-        );
-        return (
-          <Polygon
-            key={`${panel.x}${panel.y}`}
-            positions={transformedCoords}
-            pathOptions={{ color: "green" }}
-            eventHandlers={{
-              click: () => removePanel(`${panel.x},${panel.y}`),
-            }}
-          />
-        );
-      })}
+      {Array.from(transformedAdditionalPanels.values()).map((panel) => (
+        <Polygon
+          key={`${panel.x}${panel.y}`}
+          positions={panel.coords} // Use transformed coordinates
+          pathOptions={{ color: "green" }}
+          eventHandlers={{
+            click: () => removePanel(`${panel.x},${panel.y}`),
+          }}
+        />
+      ))}
 
       {movingPolygon && (
         <Polygon positions={movingPolygon} pathOptions={{ color: "red" }} />
@@ -168,6 +167,13 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
             />
           </label>
         </div>
+        <button
+          onClick={() => {
+            setAdditionalPanels(transformedAdditionalPanels);
+          }}
+        >
+          Save rotation
+        </button>
       </div>
 
       <LatLongFinder

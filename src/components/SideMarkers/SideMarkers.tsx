@@ -35,7 +35,13 @@ const SideMarkers = ({
           position={marker.coords}
           icon={healthIcon}
           eventHandlers={{
-            click: () => addPolygon(0, 0, marker.position, initialPolygon),
+            click: () =>
+              addPolygon(
+                marker.panel.x,
+                marker.panel.y,
+                marker.position,
+                marker.panel.coords
+              ),
           }}
         />
       ))}

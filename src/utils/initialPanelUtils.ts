@@ -27,7 +27,6 @@ export const combineAdditionalPanels = (
 
   return combinedPanels;
 };
-
 export const getSideMarkers = (
   polygonCoords: LatLngTuple[],
   additionalPanels: Map<string, AdditionalPanelsType>,
@@ -41,8 +40,11 @@ export const getSideMarkers = (
 
   if (!polygonCoords || polygonCoords.length === 0) return [];
 
-  const result: { position: keyof typeof Directions; coords: LatLngTuple }[] =
-    [];
+  const result: {
+    position: keyof typeof Directions;
+    coords: LatLngTuple;
+    panel: AdditionalPanelsType;
+  }[] = [];
 
   // Iterate through each panel in the combined panels
   combinedPanels.forEach((panel, key) => {
@@ -81,7 +83,7 @@ export const getSideMarkers = (
 
       // If there is no neighbor, add the missing side to the result array
       if (!combinedPanels.has(neighborKey)) {
-        result.push({ position, coords });
+        result.push({ position, coords, panel: panel });
       }
     });
   });

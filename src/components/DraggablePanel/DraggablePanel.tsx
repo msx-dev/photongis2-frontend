@@ -11,6 +11,7 @@ interface DraggablePanelProps {
     oldInitial: LatLngTuple[],
     newInitial: LatLngTuple[]
   ) => void;
+  onClick?: () => void;
 }
 const DraggablePanel = ({
   mapRef,
@@ -18,6 +19,7 @@ const DraggablePanel = ({
   initialPolygon,
   setInitialPolygon,
   onInitialPanelChange,
+  onClick,
 }: DraggablePanelProps) => {
   const lastCoordsRef = useRef<LatLngTuple[]>(initialPolygon);
   return (
@@ -27,6 +29,7 @@ const DraggablePanel = ({
       //@ts-expect-error While this results in an error, draggable exists
       draggable={true}
       eventHandlers={{
+        click: () => onClick?.(),
         dragstart: () => {
           setDragging(true);
         },

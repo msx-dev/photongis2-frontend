@@ -14,7 +14,7 @@ interface PanelGroupProps {
 
 const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const map = useMap();
-  const { additionalPanels, addPolygon, onInitialPanelChange } =
+  const { additionalPanels, addPanel, onInitialPanelChange, removePanel } =
     useAdditionalPanels();
   const [dragging, setDragging] = useState(false);
   const [showPluses, setShowPluses] = useState(false);
@@ -59,9 +59,14 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
       )}
       {Array.from(additionalPanels.values()).map((panel, index) => (
         <Polygon
-          key={`${panel.x}-${panel.y}-${index}`}
+          key={`${panel.x}${panel.y}`}
           positions={panel.coords}
           pathOptions={{ color: "green" }}
+          eventHandlers={{
+            click: () => {
+              removePanel(`${panel.x},${panel.y}`);
+            },
+          }}
         />
       ))}
       {movingPolygon && (
@@ -70,7 +75,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
       {initialPolygon.length > 0 && showPluses && !dragging && (
         <SideMarkers
           initialPolygon={initialPolygon}
-          addPolygon={addPolygon}
+          addPanel={addPanel}
           additionalPanels={additionalPanels}
         />
       )}

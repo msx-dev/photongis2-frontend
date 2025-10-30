@@ -14,7 +14,7 @@ const useAdditionalPanels = () => {
     Map<string, AdditionalPanelsType>
   >(new Map());
 
-  const addPolygon = (
+  const addPanel = (
     x: number,
     y: number,
     direction: keyof typeof Directions,
@@ -76,11 +76,20 @@ const useAdditionalPanels = () => {
     });
   };
 
+  const removePanel = (key: string) => {
+    setAdditionalPanels((prev) => {
+      const updated = new Map(prev);
+      updated.delete(key);
+      return updated;
+    });
+  };
+
   return {
     additionalPanels,
     setAdditionalPanels,
-    addPolygon,
+    addPanel,
     onInitialPanelChange,
+    removePanel,
   };
 };
 

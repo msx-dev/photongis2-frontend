@@ -6,7 +6,7 @@ import { Marker } from "react-leaflet";
 
 interface SideMarkersProps {
   initialPolygon: LatLngTuple[];
-  addPolygon: (
+  addPanel: (
     x: number,
     y: number,
     direction: keyof typeof Directions,
@@ -22,7 +22,7 @@ const healthIcon = new Icon({
 
 const SideMarkers = ({
   initialPolygon,
-  addPolygon,
+  addPanel,
   additionalPanels,
 }: SideMarkersProps) => {
   const directionKeys = ["Top", "Right", "Bottom", "Left"] as const;
@@ -36,7 +36,7 @@ const SideMarkers = ({
           icon={healthIcon}
           eventHandlers={{
             click: () =>
-              addPolygon(
+              addPanel(
                 marker.panel.x,
                 marker.panel.y,
                 marker.position,

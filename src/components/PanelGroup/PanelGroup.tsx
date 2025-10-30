@@ -23,15 +23,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const [addReferenceMode, setAddReferenceMode] = useState(false);
   const [rangeValue, setRangeValue] = useState(0);
 
-  // New: store the original (unrotated/unmoved) polygon
-  const [originalInitialPolygon, setOriginalInitialPolygon] = useState<LatLngTuple[]>([]);
-
-  // Update original polygon reference when initialPolygon is first set or after drag
-  useEffect(() => {
-    if (initialPolygon.length > 0 && originalInitialPolygon.length === 0) {
-      setOriginalInitialPolygon(initialPolygon);
-    }
-  }, [initialPolygon, originalInitialPolygon]);
+  // (removed) originalInitialPolygon state was unused
 
   useEffect(() => {
     // Update zoom level on zoom change
@@ -126,7 +118,6 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
       {initialPolygon.length > 0 && showPluses && !dragging && (
         <SideMarkers
           initialPolygon={initialPolygon}
-          originalInitialPolygon={originalInitialPolygon}
           addPanel={addPanel}
           additionalPanels={additionalPanels}
         />

@@ -23,6 +23,16 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const [addReferenceMode, setAddReferenceMode] = useState(false);
   const [rangeValue, setRangeValue] = useState(0);
 
+  // New: store the original (unrotated/unmoved) polygon
+  const [originalInitialPolygon, setOriginalInitialPolygon] = useState<LatLngTuple[]>([]);
+
+  // Update original polygon reference when initialPolygon is first set or after drag
+  useEffect(() => {
+    if (initialPolygon.length > 0 && originalInitialPolygon.length === 0) {
+      setOriginalInitialPolygon(initialPolygon);
+    }
+  }, [initialPolygon, originalInitialPolygon]);
+
   useEffect(() => {
     // Update zoom level on zoom change
     const handleZoomEnd = () => {
@@ -43,6 +53,30 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
     };
   }, [map]); // On
 
+  // Utility: Rotate around a center, matching DraggablePanel logic
+  const rotateAndTranslatePanel = (
+    coords: LatLngTuple[],
+    center: { x: number; y: number },
+    angleDeg: number
+  ): LatLngTuple[] => {
+    if (!map || coords.length === 0) return [];
+
+    const points = coords.map(([lat, lng]) => map.project([lat, lng]));
+    const angleRad = (angleDeg * Math.PI) / 180;
+
+    const rotatedPoints = points.map((p) => {
+      const dx = p.x - center.x;
+      const dy = p.y - center.y;
+      const rx = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+      const ry = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+      return L.point(center.x + rx, center.y + ry);
+    });
+    return rotatedPoints.map((p) => {
+      const latlng = map.unproject(p);
+      return [latlng.lat, latlng.lng] as LatLngTuple;
+    });
+  };
+
   return (
     <>
       {initialPolygon.length !== 0 && (
@@ -56,16 +90,34 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
         />
       )}
 
-      {Array.from(additionalPanels.values()).map((panel) => (
-        <Polygon
-          key={`${panel.x}${panel.y}`}
-          positions={panel.coords}
-          pathOptions={{ color: "green" }}
-          eventHandlers={{
-            click: () => removePanel(`${panel.x},${panel.y}`),
-          }}
-        />
-      ))}
+      {Array.from(additionalPanels.values()).map((panel) => {
+        // Find the center of the initialPolygon in pixel space
+        const initialPoints = initialPolygon.map(([lat, lng]) =>
+          map.project([lat, lng])
+        );
+        const cx =
+          initialPoints.reduce((sum, p) => sum + p.x, 0) / initialPoints.length;
+        const cy =
+          initialPoints.reduce((sum, p) => sum + p.y, 0) / initialPoints.length;
+        const center = { x: cx, y: cy };
+
+        // Rotate+translate this additional panel around the same center
+        const transformedCoords = rotateAndTranslatePanel(
+          panel.coords,
+          center,
+          rangeValue
+        );
+        return (
+          <Polygon
+            key={`${panel.x}${panel.y}`}
+            positions={transformedCoords}
+            pathOptions={{ color: "green" }}
+            eventHandlers={{
+              click: () => removePanel(`${panel.x},${panel.y}`),
+            }}
+          />
+        );
+      })}
 
       {movingPolygon && (
         <Polygon positions={movingPolygon} pathOptions={{ color: "red" }} />
@@ -74,6 +126,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
       {initialPolygon.length > 0 && showPluses && !dragging && (
         <SideMarkers
           initialPolygon={initialPolygon}
+          originalInitialPolygon={originalInitialPolygon}
           addPanel={addPanel}
           additionalPanels={additionalPanels}
         />

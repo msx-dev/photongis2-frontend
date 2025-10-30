@@ -1,7 +1,7 @@
 "use client";
 
 import useAdditionalPanels from "@/hooks/useAdditionalPanels";
-import { LatLngTuple } from "leaflet";
+import L, { LatLngTuple } from "leaflet";
 import { RefObject, useEffect, useState } from "react";
 import { Polygon, useMap } from "react-leaflet";
 import DraggablePanel from "../DraggablePanel/DraggablePanel";
@@ -21,6 +21,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const [movingPolygon, setMovingPolygon] = useState<LatLngTuple[]>([]);
   const [initialPolygon, setInitialPolygon] = useState<LatLngTuple[]>([]);
   const [addReferenceMode, setAddReferenceMode] = useState(false);
+  const [rangeValue, setRangeValue] = useState(0);
 
   useEffect(() => {
     // Update zoom level on zoom change
@@ -46,6 +47,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
     <>
       {initialPolygon.length !== 0 && (
         <DraggablePanel
+          rangeValue={rangeValue}
           mapRef={mapRef}
           initialPolygon={initialPolygon}
           setDragging={setDragging}
@@ -53,21 +55,22 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
           onInitialPanelChange={onInitialPanelChange}
         />
       )}
-      {Array.from(additionalPanels.values()).map((panel, index) => (
+
+      {Array.from(additionalPanels.values()).map((panel) => (
         <Polygon
           key={`${panel.x}${panel.y}`}
           positions={panel.coords}
           pathOptions={{ color: "green" }}
           eventHandlers={{
-            click: () => {
-              removePanel(`${panel.x},${panel.y}`);
-            },
+            click: () => removePanel(`${panel.x},${panel.y}`),
           }}
         />
       ))}
+
       {movingPolygon && (
         <Polygon positions={movingPolygon} pathOptions={{ color: "red" }} />
       )}
+
       {initialPolygon.length > 0 && showPluses && !dragging && (
         <SideMarkers
           initialPolygon={initialPolygon}
@@ -76,15 +79,53 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
         />
       )}
 
-      <div style={{ marginTop: "50px", position: "absolute", zIndex: 10000 }}>
-        <button
-          onClick={() => {
-            setAddReferenceMode(true);
+      {/* ✅ UI Controls */}
+      <div
+        style={{
+          position: "absolute",
+          top: "50px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 10000,
+          background: "rgba(255, 255, 255, 0.8)",
+          padding: "10px",
+          borderRadius: "8px",
+          textAlign: "center",
+        }}
+      >
+        <button onClick={() => setAddReferenceMode(true)}>Add Polygon</button>
+
+        {/* 🆕 Range Input */}
+
+        <div
+          style={{ marginTop: "10px", width: "250px" }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            mapRef.current?.dragging.disable(); // disable map drag
+          }}
+          onMouseUp={(e) => {
+            e.stopPropagation();
+            mapRef.current?.dragging.enable(); // re-enable map drag
+          }}
+          onMouseLeave={() => {
+            mapRef.current?.dragging.enable(); // safety
           }}
         >
-          Add Polygon
-        </button>
+          <label>
+            Rotation: {rangeValue}°
+            <input
+              type="range"
+              min={-180}
+              max={180}
+              step={1}
+              value={rangeValue}
+              onChange={(e) => setRangeValue(Number(e.target.value))}
+              style={{ width: "200px", marginLeft: "10px" }}
+            />
+          </label>
+        </div>
       </div>
+
       <LatLongFinder
         setInitialPolygon={setInitialPolygon}
         addReferenceMode={addReferenceMode}

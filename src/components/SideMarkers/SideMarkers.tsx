@@ -1,6 +1,6 @@
 import { Directions } from "@/constants/panelConstants";
 import { AdditionalPanelsType } from "@/hooks/useAdditionalPanels";
-import { getSideMarkers } from "@/utils/initialPanelUtils";
+import { getSideMarkers } from "@/utils/panelUtils";
 import { Icon, LatLngTuple } from "leaflet";
 import { Marker } from "react-leaflet";
 
@@ -25,8 +25,6 @@ const SideMarkers = ({
   addPanel,
   additionalPanels,
 }: SideMarkersProps) => {
-  const directionKeys = ["Top", "Right", "Bottom", "Left"] as const;
-
   return (
     <>
       {getSideMarkers(initialPolygon, additionalPanels).map((marker, index) => (

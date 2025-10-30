@@ -70,15 +70,15 @@ export const getSideMarkers = (
       let neighborKey: string;
 
       if (position === "Right") {
-        neighborKey = `${x},${y + 1}`; // Right neighbor increases x by 1
+        neighborKey = `${x},${y + 1}`;
       } else if (position === "Left") {
-        neighborKey = `${x},${y - 1}`; // Left neighbor decreases x by 1
+        neighborKey = `${x},${y - 1}`;
       } else if (position === "Top") {
-        neighborKey = `${x + 1},${y}`; // Top neighbor increases y by 1
+        neighborKey = `${x + 1},${y}`;
       } else if (position === "Bottom") {
-        neighborKey = `${x - 1},${y}`; // Bottom neighbor decreases y by 1
+        neighborKey = `${x - 1},${y}`;
       } else {
-        neighborKey = `${x},${y}`; // Default case (this should not be reached)
+        neighborKey = `${x},${y}`;
       }
 
       // If there is no neighbor, add the missing side to the result array

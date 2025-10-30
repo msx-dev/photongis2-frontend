@@ -42,10 +42,6 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
     };
   }, [map]); // On
 
-  useEffect(() => {
-    console.log(additionalPanels);
-  }, [additionalPanels]);
-
   return (
     <>
       {initialPolygon.length !== 0 && (

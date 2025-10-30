@@ -21,7 +21,6 @@ const healthIcon = new Icon({
 
 export default function Map2() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const polygonRef = useRef<L.Polygon>(null);
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {

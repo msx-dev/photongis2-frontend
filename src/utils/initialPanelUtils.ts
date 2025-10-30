@@ -1,3 +1,4 @@
+import { AdditionalPanelsType } from "@/hooks/useAdditionalPanels";
 import { LatLngTuple } from "leaflet";
 
 export const getPolygonCenter = (coords: LatLngTuple[]) => {
@@ -9,6 +10,7 @@ export const getPolygonCenter = (coords: LatLngTuple[]) => {
 
 export const getSideMarkers = (
   polygonCoords: LatLngTuple[],
+  additionalPanels: Map<string, AdditionalPanelsType>,
   offset = 0.00002
 ) => {
   if (!polygonCoords || polygonCoords.length === 0) return [];

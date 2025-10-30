@@ -1,5 +1,6 @@
 "use client";
 
+import useAdditionalPanels from "@/hooks/useAdditionalPanels";
 import { LatLngTuple } from "leaflet";
 import { RefObject, useEffect, useState } from "react";
 import { Polygon, useMap } from "react-leaflet";
@@ -13,14 +14,12 @@ interface PanelGroupProps {
 
 const PanelGroup = ({ mapRef }: PanelGroupProps) => {
   const map = useMap();
-  const [additionalPanel, setAdditionalPanel] = useState<LatLngTuple[]>([]);
-
+  const { additionalPanels, addPolygon, onInitialPanelChange } =
+    useAdditionalPanels();
   const [dragging, setDragging] = useState(false);
   const [showPluses, setShowPluses] = useState(false);
   const [movingPolygon, setMovingPolygon] = useState<LatLngTuple[]>([]);
   const [initialPolygon, setInitialPolygon] = useState<LatLngTuple[]>([]);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
   const [addReferenceMode, setAddReferenceMode] = useState(false);
 
   useEffect(() => {
@@ -43,6 +42,10 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
     };
   }, [map]); // On
 
+  useEffect(() => {
+    console.log(additionalPanels);
+  }, [additionalPanels]);
+
   return (
     <>
       {initialPolygon.length !== 0 && (
@@ -51,16 +54,25 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
           initialPolygon={initialPolygon}
           setDragging={setDragging}
           setInitialPolygon={setInitialPolygon}
+          onInitialPanelChange={onInitialPanelChange}
         />
       )}
-      {additionalPanel.length !== 0 && (
-        <Polygon positions={additionalPanel} pathOptions={{ color: "green" }} />
-      )}
+      {Array.from(additionalPanels.values()).map((panel, index) => (
+        <Polygon
+          key={`${panel.x}-${panel.y}-${index}`}
+          positions={panel.coords}
+          pathOptions={{ color: "green" }}
+        />
+      ))}
       {movingPolygon && (
         <Polygon positions={movingPolygon} pathOptions={{ color: "red" }} />
       )}
       {initialPolygon.length > 0 && showPluses && !dragging && (
-        <SideMarkers initialPolygon={initialPolygon} />
+        <SideMarkers
+          initialPolygon={initialPolygon}
+          addPolygon={addPolygon}
+          additionalPanels={additionalPanels}
+        />
       )}
 
       <div style={{ marginTop: "50px", position: "absolute", zIndex: 10000 }}>

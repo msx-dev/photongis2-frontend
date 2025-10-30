@@ -1,5 +1,5 @@
 import { LatLngTuple } from "leaflet";
-import { RefObject } from "react";
+import { RefObject, useRef } from "react";
 import { Polygon } from "react-leaflet";
 
 interface DraggablePanelProps {
@@ -7,13 +7,19 @@ interface DraggablePanelProps {
   setDragging: React.Dispatch<React.SetStateAction<boolean>>;
   initialPolygon: LatLngTuple[];
   setInitialPolygon: React.Dispatch<React.SetStateAction<LatLngTuple[]>>;
+  onInitialPanelChange: (
+    oldInitial: LatLngTuple[],
+    newInitial: LatLngTuple[]
+  ) => void;
 }
 const DraggablePanel = ({
   mapRef,
   setDragging,
   initialPolygon,
   setInitialPolygon,
+  onInitialPanelChange,
 }: DraggablePanelProps) => {
+  const lastCoordsRef = useRef<LatLngTuple[]>(initialPolygon);
   return (
     <Polygon
       positions={initialPolygon}
@@ -24,6 +30,15 @@ const DraggablePanel = ({
         dragstart: () => {
           setDragging(true);
         },
+        drag: (e) => {
+          const layer = e.target as L.Polygon;
+          const newCoords: LatLngTuple[] = (
+            layer.getLatLngs()[0] as L.LatLng[]
+          ).map((latlng) => [latlng.lat, latlng.lng] as LatLngTuple);
+
+          onInitialPanelChange(lastCoordsRef.current, newCoords);
+          lastCoordsRef.current = newCoords;
+        },
         dragend: (e) => {
           const layer = e.target as L.Polygon;
           const newCoords: LatLngTuple[] = (
@@ -33,13 +48,9 @@ const DraggablePanel = ({
           setInitialPolygon(newCoords);
           setDragging(false);
 
-          // Re-enable map dragging
-          if (mapRef.current) {
-            mapRef.current.dragging.enable();
-          }
+          if (mapRef.current) mapRef.current.dragging.enable();
         },
         mousedown: () => {
-          // Disable map drag while dragging polygon
           if (mapRef.current) mapRef.current.dragging.disable();
         },
         mouseup: () => {

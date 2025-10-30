@@ -13,7 +13,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   FeatureGroup,
   MapContainer,
-  MapContainer,
   Marker,
   Polygon,
   TileLayer,
@@ -153,18 +152,6 @@ export default function Map() {
           //@ts-expect-error While this results in an error, draggable exists
           draggable={true}
           eventHandlers={{
-            drag: (e) => {
-              /*
-              const layer = e.target as L.Polygon;
-              const newCoords = layer
-                .getLatLngs()[0]
-                .map(
-                  (latlng: L.LatLng) => [latlng.lat, latlng.lng] as LatLngTuple
-                );
-              setPolygon(newCoords); // update state with new coordinates
-              */
-              console.log(e);
-            },
             dragend: (e) => {
               const layer = e.target as L.Polygon;
 
@@ -175,8 +162,6 @@ export default function Map() {
 
               // Update state
               setPolygon(newCoords);
-
-              console.log("Drag ended, new polygon coords:", newCoords);
             },
           }}
         />

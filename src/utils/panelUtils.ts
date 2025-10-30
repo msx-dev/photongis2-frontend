@@ -2,6 +2,13 @@ import { Directions } from "@/constants/panelConstants";
 import { AdditionalPanelsType } from "@/hooks/useAdditionalPanels";
 import { LatLngTuple } from "leaflet";
 
+export const getPanelWidthHeight = (panel: LatLngTuple[]) => {
+  const panelHeight = Math.abs(panel[0][0] - panel[2][0]);
+  const panelWidth = Math.abs(panel[0][1] - panel[2][1]);
+
+  return { panelWidth, panelHeight };
+};
+
 export const getPolygonCenter = (coords: LatLngTuple[]) => {
   const latSum = coords.reduce((sum, [lat]) => sum + lat, 0);
   const lngSum = coords.reduce((sum, [, lng]) => sum + lng, 0);
@@ -27,18 +34,17 @@ export const combineAdditionalPanels = (
 
   return combinedPanels;
 };
+
 export const getSideMarkers = (
   polygonCoords: LatLngTuple[],
-  additionalPanels: Map<string, AdditionalPanelsType>,
-  offset = 0.00002
+  additionalPanels: Map<string, AdditionalPanelsType>
 ) => {
+  if (!polygonCoords || polygonCoords.length === 0) return [];
+  const { panelWidth, panelHeight } = getPanelWidthHeight(polygonCoords);
   const combinedPanels = combineAdditionalPanels(
     polygonCoords,
     additionalPanels
   );
-  console.log(combinedPanels);
-
-  if (!polygonCoords || polygonCoords.length === 0) return [];
 
   const result: {
     position: keyof typeof Directions;
@@ -58,10 +64,10 @@ export const getSideMarkers = (
       position: keyof typeof Directions;
       coords: LatLngTuple;
     }[] = [
-      { position: "Top", coords: [center[0] + offset, center[1]] },
-      { position: "Right", coords: [center[0], center[1] + offset] },
-      { position: "Bottom", coords: [center[0] - offset, center[1]] },
-      { position: "Left", coords: [center[0], center[1] - offset] },
+      { position: "Top", coords: [center[0] + panelHeight / 2, center[1]] },
+      { position: "Right", coords: [center[0], center[1] + panelWidth / 2] },
+      { position: "Bottom", coords: [center[0] - panelHeight / 2, center[1]] },
+      { position: "Left", coords: [center[0], center[1] - panelWidth / 2] },
     ];
 
     // Check for neighbors and add missing ones to result
@@ -88,6 +94,5 @@ export const getSideMarkers = (
     });
   });
 
-  console.log(result);
   return result;
 };

@@ -26,7 +26,7 @@ const PanelGroup = ({ mapRef }: PanelGroupProps) => {
     // Update zoom level on zoom change
     const handleZoomEnd = () => {
       const currentZoom = map.getZoom();
-      if (currentZoom > 20) {
+      if (currentZoom > 21) {
         setShowPluses(true);
       } else {
         setShowPluses(false);

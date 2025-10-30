@@ -1,13 +1,13 @@
 import { Directions } from "@/constants/panelConstants";
 import { LatLngTuple } from "leaflet";
+import { getPanelWidthHeight } from "./panelUtils";
 
 export const getAdditionalPanel = (
   initialPanel: LatLngTuple[],
   spacing: number,
   direction: keyof typeof Directions
 ): LatLngTuple[] => {
-  const panelHeight = Math.abs(initialPanel[0][0] - initialPanel[2][0]);
-  const panelWidth = Math.abs(initialPanel[0][1] - initialPanel[2][1]);
+  const { panelWidth, panelHeight } = getPanelWidthHeight(initialPanel);
   const topSpacing = spacing * 0.7;
 
   switch (direction) {

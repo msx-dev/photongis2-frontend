@@ -1,5 +1,5 @@
 "use client";
-import L, { Icon } from "leaflet";
+import L from "leaflet";
 import "leaflet-control-geocoder";
 import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 import "leaflet-defaulticon-compatibility";
@@ -12,12 +12,6 @@ import { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import PanelGroup from "../PanelGroup/PanelGroup";
 import styles from "./Map2.module.scss";
-
-const healthIcon = new Icon({
-  iconUrl:
-    "https://img.icons8.com/?size=100&id=7yVMtODDHoSU&format=png&color=000000",
-  iconSize: [35, 35],
-});
 
 export default function Map2() {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
